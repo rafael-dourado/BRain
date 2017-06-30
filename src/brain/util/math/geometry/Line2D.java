@@ -1,17 +1,13 @@
-package brain.util.math.geometry;
+package brain.util.math;
 
 import brain.util.Util;
 
 public class Line2D {
-
-	Point2D start;
-	Point2D end;
-	// y = alpha * x + b; representação matemática de uma reta em um plano
-	// cartesiano
-	private Function function;
-	private double b;
+	 
+	private Point2D start;
+	private Point2D end;
 	private boolean isLinearFunction;
-
+	private boolean ignoreLimit = false;
 	public Line2D(Point2D start, Point2D end) {
 		this.start = start;
 		this.end = end;
@@ -31,20 +27,20 @@ public class Line2D {
 	}
 
 	/**
-	 * Checa se uma linha pode ser representada por uma função linear. Uma linha
-	 * é uma função linear se, e somente se, para cada valor de <code>x</code>,
-	 * existir apenas um único valor de <code>y</code> em seu domínio.
+	 * Checa se uma linha pode ser representada por uma funÃ§Ã£o linear. Uma linha
+	 * Ã© uma funÃ§Ã£o linear se, e somente se, para cada valor de <code>x</code>,
+	 * existir apenas um Ãºnico valor de <code>y</code> em seu domÃ­nio.
 	 * 
 	 * @return <code>true</code> se a linha puder ser representada por uma
-	 *         função linear ou <code>false</code> caso contrário.
+	 *         funÃ§Ã£o linear ou <code>false</code> caso contrÃ¡rio.
 	 */
 	public boolean isLinearFunction() {
 		return isLinearFunction;
 	}
 
 	/**
-	 * Calcula e retorna o coeficiente angular da reta data. Se a reta não for
-	 * uma função linear, ou seja, for uma reta paralela ao eixo y, então
+	 * Calcula e retorna o coeficiente angular da reta data. Se a reta nÃ£o for
+	 * uma funÃ§Ã£o linear, ou seja, for uma reta paralela ao eixo y, entÃ£o
 	 * retorna <code>Double.NaN</code>;
 	 * 
 	 * @return o coeficiente angular da reta data ou <code>Double.NaN</code>;
@@ -57,24 +53,24 @@ public class Line2D {
 	}
 
 	/**
-	 * Verifica se a linha é paralela a outra linha, comparando o coeficiente
+	 * Verifica se a linha Ã© paralela a outra linha, comparando o coeficiente
 	 * angular de ambas as linhas.
 	 * 
 	 * @param line
 	 *            um objeto Line2D
-	 * @return <code>true</code> se ambas as retas são paralelas entre si ou
-	 *         <code>false</code> caso contrário.
+	 * @return <code>true</code> se ambas as retas sÃ£o paralelas entre si ou
+	 *         <code>false</code> caso contrÃ¡rio.
 	 */
 	public boolean isParallelTo(Line2D line) {
 		return Util.compareDoble(this.getAngularCoefficient(), line.getAngularCoefficient());
 	}
 
 	/**
-	 * Retorna o coeficiente linear, caso a linha seja uma função linear, ou
-	 * {@code Double.NaN}, caso não seja
+	 * Retorna o coeficiente linear, caso a linha seja uma funÃ§Ã£o linear, ou
+	 * {@code Double.NaN}, caso nÃ£o seja
 	 * 
-	 * @return o coeficiente linear, caso a linha seja uma função linear, ou
-	 *         {@code Double.NaN}, caso não seja
+	 * @return o coeficiente linear, caso a linha seja uma funÃ§Ã£o linear, ou
+	 *         {@code Double.NaN}, caso nÃ£o seja
 	 */
 	public double getLinearCoefficient() {
 		double alpha = getAngularCoefficient();
@@ -84,14 +80,13 @@ public class Line2D {
 	}
 
 	/**
-	 * Retorna o ponto de interseção a uma determinada linha (representada por
-	 * uma função linear, não somente o intervalo que criou a linha) ou
-	 * {@code Null} caso não haja interseção entre elas
+	 * Retorna o ponto de interseÃ§Ã£o a uma determinada linha  ou
+	 * {@code Null} caso nÃ£o haja interseÃ§Ã£o entre elas
 	 * 
 	 * @param line
 	 *            uma linha qualquer
-	 * @return o ponto de interseção a uma determinada linha ou {@code Null}
-	 *         caso não haja interseção entre elas
+	 * @return o ponto de interseÃ§Ã£o a uma determinada linha ou {@code Null}
+	 *         caso nÃ£o haja interseÃ§Ã£o entre elas
 	 */
 	public Point2D getIntersctPointIn(Line2D line) {
 		if (this.isParallelTo(line)) {
@@ -118,6 +113,65 @@ public class Line2D {
 			y = a * x + b;
 		}
 
-		return new Point2D(x, y);
+		Point2D intersectPoint = new Point2D(x, y);
+		
+		if( ignoreLimit || ( this.contains( intersectPoint ) && line.contains( intersectPoint ) ) )
+			return intersectPoint;
+
+		// as linhas se interceptam, mas nÃ£o em seu intervalo delimitado por end e start;
+		return null;
 	}
+	
+	public void ignoreLimit(boolean ignoreLimit){
+		this.ignoreLimit = ignoreLimit;
+	}
+	
+	
+	public boolean contains(Point2D point){
+		if(Util.compareDoble(end.getX(), start.getX()))
+			return false;
+		
+		if(!ignoreLimit)
+			if(point.getX() > getGreaterX() || 
+				point.getX() < getLeastX() || 
+				point.getY() > getGreaterY() || 
+				point.getY() < getLeastY())
+			return false;
+		
+		double a = (end.getY() - start.getY())/(end.getX()-start.getX());
+		double b = (start.getY()*end.getX() - start.getX()*end.getY()) / (end.getX() - start.getX() );
+		
+		return point.getY() == a*point.getX() + b;
+	}
+	
+	public double getGreaterX(){
+		
+		if(end.getX() > start.getX())
+			return end.getX();
+		return start.getX();
+
+	}
+	
+	public double getLeastX(){
+		
+		if(end.getX() > start.getX())
+			return start.getX();
+		
+		return end.getX();
+	}
+	
+	public double getGreaterY(){
+		if( end.getY() > start.getY())
+			return end.getY();
+		
+		return start.getY();
+	}
+	
+	public double getLeastY(){
+		if( end.getY() > start.getY() )
+			return start.getY();
+		
+		return end.getY();
+	}
+	
 }
