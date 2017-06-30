@@ -14,7 +14,7 @@ public class Line2D {
 		this.isLinearFunction = !Util.compareDoble(end.getX(), start.getX());
 
 		if (start.equals(end))
-			throw new RuntimeException("Erro: Line2D precisa ter 2 Point2D diferentes entre si.");
+			throw new RuntimeException("Line2D precisa ter 2 Point2D diferentes entre si.");
 
 	}
 
@@ -36,6 +36,51 @@ public class Line2D {
 	 */
 	public boolean isLinearFunction() {
 		return isLinearFunction;
+	}
+	/**
+	 * retorna o maior valor entre start.x e end.x
+	 * @return o maior valor entre start.x e end.x
+	 */
+	public double getGreaterX(){
+		
+		if(end.getX() > start.getX())
+			return end.getX();
+		return start.getX();
+
+	}
+	
+	/**
+	 * retorna o menor valor entre start.x e end.x
+	 * @return o menor valor entre start.x e end.x
+	 */
+	public double getLeastX(){
+		
+		if(end.getX() > start.getX())
+			return start.getX();
+		
+		return end.getX();
+	}
+	
+	/**
+	 * retorna o maior valor entre start.y e end.y
+	 * @return o maior valor entre start.y e end.y
+	 */
+	public double getGreaterY(){
+		if( end.getY() > start.getY())
+			return end.getY();
+		
+		return start.getY();
+	}
+	
+	/**
+	 * retorna o menor valor entre start.y e end.y
+	 * @return o menor valor entre start.y e end.y
+	 */
+	public double getLeastY(){
+		if( end.getY() > start.getY() )
+			return start.getY();
+		
+		return end.getY();
 	}
 
 	/**
@@ -126,7 +171,11 @@ public class Line2D {
 		this.ignoreLimit = ignoreLimit;
 	}
 	
-	
+	/**
+	 * Verifica se um ponto pertence a uma linha.
+	 * @param point um ponto qualquer.
+	 * @return {@code true} se o ponto pertencer à linha ou {@code false} caso contrário.
+	 */
 	public boolean contains(Point2D point){
 		if(Util.compareDoble(end.getX(), start.getX()))
 			return false;
@@ -141,37 +190,7 @@ public class Line2D {
 		double a = (end.getY() - start.getY())/(end.getX()-start.getX());
 		double b = (start.getY()*end.getX() - start.getX()*end.getY()) / (end.getX() - start.getX() );
 		
-		return point.getY() == a*point.getX() + b;
-	}
-	
-	public double getGreaterX(){
-		
-		if(end.getX() > start.getX())
-			return end.getX();
-		return start.getX();
-
-	}
-	
-	public double getLeastX(){
-		
-		if(end.getX() > start.getX())
-			return start.getX();
-		
-		return end.getX();
-	}
-	
-	public double getGreaterY(){
-		if( end.getY() > start.getY())
-			return end.getY();
-		
-		return start.getY();
-	}
-	
-	public double getLeastY(){
-		if( end.getY() > start.getY() )
-			return start.getY();
-		
-		return end.getY();
+		return Util.compareDoble(point.getY(), a*point.getX() + b);
 	}
 	
 }
