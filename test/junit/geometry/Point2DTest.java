@@ -1,49 +1,59 @@
-package brain.util.math.geometry;
+package test.junit.geometry;
 
-public class Point2D {
-	private double x;
-	private double y;
-	public final static Point2D ORIGIN = new Point2D(0.0, 0.0);
-	private final static double EPSILON = 0.00000001;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
-	public Point2D(double x, double y) {
-		this.x = x;
-		this.y = y;
+import org.junit.Before;
+import org.junit.Test;
+
+import brain.util.math.geometry.Point2D;
+
+public class Point2DTest {
+
+	Point2D p;
+
+	@Before
+	public void init() {
+		p = new Point2D(1.0, 2.0);
 	}
 
-	public double getX() {
-		return x;
+	@Test
+	public void equals() {
+		Point2D origin = Point2D.ORIGIN;
+		Point2D p1 = new Point2D(1.0, 2.0);
+		Point2D equalsp1 = new Point2D(1.0, 2.0);
+
+		assertEquals(p1, equalsp1);
+		assertEquals(Point2D.ORIGIN, origin);
+		assertNotEquals(p1, origin);
 	}
 
-	public double getY() {
-		return y;
+	@Test
+	public void distanceOf() {
+		double delta = 0.00000001;
+		Point2D origin = Point2D.ORIGIN;
+		Point2D p1 = new Point2D(3.0, 4.0);
+		Point2D p2 = new Point2D(6.0, 8.0);
+		Point2D p3 = new Point2D(5.0, 6.0);
+
+		assertEquals(5.0, origin.distanceOf(p1), delta);
+		assertEquals(5.0, p1.distanceOf(p2), delta);
+		assertEquals(7.8102496759, origin.distanceOf(p3), delta);
 	}
 
-	public double distanceOf(Point2D point) {
-		double w = Math.pow(point.getX() - this.getX(), 2);
-		double h = Math.pow(point.getY() - this.getY(), 2);
-
-		return Math.sqrt(w + h);
-	}
-
-	public boolean equals(Point2D p) {
-		if (p != null) {
-			if (!Double.isFinite(p.getX()) && !Double.isFinite(p.getY()) && !Double.isFinite(getX())
-					&& !Double.isFinite(getY()))
-				return Math.abs(p.getX() - getX()) <= EPSILON && Math.abs(p.getY() - getY()) <= EPSILON;
-			else
-				return p.getX() == this.getX() && p.getY() == this.getY();
-		}
-
-		return false;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (o != null && o.getClass() == this.getClass()) {
-			Point2D other = (Point2D) o;
-			return this.equals(other);
-		}
-		return false;
+	@Test
+	public void deslocAndRevert() {
+		Point2D pDelsoc = new Point2D(2.0, 4.0);
+		Point2D pDesloc2 = new Point2D(3.0, 6.0);
+		Point2D original = new Point2D(p);
+		p.desloc(1.0, 2.0);
+		assertEquals(pDelsoc, p);
+		p.revertDesloc();
+		assertEquals(original, p);
+		p.desloc(1.0, 2.0);
+		p.desloc(1.0, 2.0);
+		assertEquals(pDesloc2, p);
+		p.revertDesloc();
+		assertEquals(original, p);
 	}
 }
