@@ -96,4 +96,15 @@ public class Polygon2D {
 		return true;
 	}
 
+	public void desloc(double x, double y) {
+		for (Point2D vertex : vertexes) {
+			vertex.desloc(x, y);
+		}
+	}
+
+	public void revertDesloc() {
+		for (Point2D vertex : vertexes) {
+			vertex.revertDesloc();
+		}
+	}
 }
