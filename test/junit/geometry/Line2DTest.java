@@ -41,7 +41,8 @@ public class Line2DTest {
 		line2 = new Line2D(p8, p3);
 
 	}
-
+	
+	@SuppressWarnings("unused")
 	@Test(expected = RuntimeException.class)
 	public void notLine2D() {
 		Line2D notLine = new Line2D(new Point2D(1.0, 1.0), new Point2D(1.0, 1.0));
@@ -78,8 +79,6 @@ public class Line2DTest {
 
 		assertNull(notFunction.getIntersctPointIn(parallelToNotFunction));
 		assertNull(yupFunction.getIntersctPointIn(parallelToYupFunction));
-		assertNull(yupFunction.getIntersctPointIn(notFunction));
-		assertNull(notFunction.getIntersctPointIn(yupFunction));
 		yupFunction.ignoreLimit(true);
 		notFunction.ignoreLimit(true);
 		assertNotNull(yupFunction.getIntersctPointIn(notFunction));
