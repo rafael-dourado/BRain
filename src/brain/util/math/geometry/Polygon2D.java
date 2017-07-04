@@ -1,10 +1,10 @@
-package brain.util.math.geometry;
+package brain.util.math;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import brain.util.Util;
-
+import brain.util.math.Point2D;
 public class Polygon2D {
 
 	private List<Point2D> vertexes;
@@ -19,9 +19,8 @@ public class Polygon2D {
 
 	public Polygon2D(Point2D... point2ds) {
 		vertexes = new ArrayList<>();
-		for (Point2D point : point2ds) {
-			vertexes.add(point);
-		}
+		for(Point2D p: point2ds)
+			vertexes.add(p);
 	}
 
 	public boolean isValid() {
@@ -69,16 +68,16 @@ public class Polygon2D {
 	public double getLeastY() {
 		double leastY = Double.POSITIVE_INFINITY;
 		for (Point2D vertex : vertexes) {
-			if (vertex.getX() < leastY)
-				leastY = vertex.getX();
+			if (vertex.getY() < leastY)
+				leastY = vertex.getY();
 		}
 
 		return leastY;
 	}
-
+	
 	/**
 	 * checa se um ponto existe no polígono. Obs: O ponto não será considerado
-	 * interno se ele estiver contido na aresta do polígono ou seja,
+	 * interno se ele estiver contido na aresta do polígono.
 	 * 
 	 * @param point
 	 *            um ponto qualquer
@@ -91,8 +90,8 @@ public class Polygon2D {
 
 		if (Util.compare(point.getY(), getGreaterY()) >= 0 || Util.compare(point.getY(), getLeastY()) <= 0)
 			return false;
-		// cria uma linha paralela ao eixo x, onde y é constante e vai até x =
-		// point.getX();
+		
+		List<Point2D> checked = new ArrayList<Point2D>();
 		int count = 0;
 		Line2D auxLine = new Line2D(new Point2D(0.0, point.getY()), point);
 		auxLine.ignoreLimit(true);
@@ -100,8 +99,10 @@ public class Polygon2D {
 		for (int i = 0; i < vertexes.size(); i++) {
 			Point2D a = new Point2D(vertexes.get(i));
 			Point2D b;
+			
 			if (i != vertexes.size() - 1) {
 				b = new Point2D(vertexes.get(i + 1));
+				
 			} else {
 				b = new Point2D(vertexes.get(0));
 			}
@@ -109,42 +110,66 @@ public class Polygon2D {
 			Line2D edge = new Line2D(a, b);
 
 			Point2D intersection = auxLine.getIntersctPointIn(edge);
+			
 			// se houve interseção, só contar se foi à direita do ponto.
-			if (intersection != null && intersection.isRightOf(point)) {
-				// interseção não foi em um vértice
-				if (!a.equals(intersection) && !b.equals(intersection))
-					count++;
-			} else {
-				Point2D vertexIntersected = getIntersectedVertex(intersection, a, b);
+			if(intersection != null){
+				if (intersection.isRightOf(point)) {
+					// interseção não foi em um vértice
+					if (!a.equals(intersection) && !b.equals(intersection))
+						count++;
+					
+					else {
+						Point2D inVertex = getIntersected(intersection, a, b);
+						if(!isLocalMinOrMax(intersection) && !checked.contains(inVertex)){
+							count++;
+							checked.add(inVertex);
+							
+						}
+
+					}
+					
+				} 
+				
 			}
 
 		}
-
 		return count % 2 != 0;
 	}
-
-	private Point2D getIntersectedVertex(Point2D intersection, Point2D a, Point2D b) {
-		Point2D p = a.equals(intersection) ? a : b;
+	
+	public Point2D getIntersected(Point2D intersection, Point2D a, Point2D b){
+		Point2D p = intersection.equals(a) ? a : b ;
 		return p;
 	}
-	// ta errado
-	public boolean isLocalMinOrMax(Point2D vertex) {
+	
+	/**
+	 * verifca se o vértice é um máximo ou mínimo local.
+	 * O vértice será um mínimo ou máximo local se os coeficientes angulares da aresta anterior e da
+	 * aresta seguinte tiverem sinais diferentes.
+	 * @return {@code true} se o vértice for um mínimo local ou {@code false} caso contrário.
+	 */
+
+	private boolean isLocalMinOrMax(Point2D vertex) {
+
 		final int index = vertexes.indexOf(vertex);
 		final Point2D prev;
 		final Point2D next;
+
 		if (index != vertexes.size() - 1)
 			next = new Point2D(vertexes.get(index + 1));
 		else
 			next = new Point2D(vertexes.get(0));
+
 		if (index != 0)
 			prev = new Point2D(vertexes.get(index - 1));
 		else
 			prev = new Point2D(vertexes.get(vertexes.size() - 1));
 
-		final Line2D edge1 = new Line2D(prev, vertex);
-		final Line2D edge2 = new Line2D(vertex, next);
+		Point2D aux = new Point2D(0,vertex.getY());
 
-		return edge1.getAngularCoefficient() * edge2.getAngularCoefficient() > 0;
+		final Line2D auxLine1 = new Line2D(aux,prev);
+		final Line2D auxLine2 = new Line2D(aux,next);
+		
+		return auxLine1.getAngularCoefficient() * auxLine2.getAngularCoefficient() > 0;
 	}
 
 	public void desloc(double x, double y) {
@@ -159,3 +184,5 @@ public class Polygon2D {
 		}
 	}
 }
+
+
