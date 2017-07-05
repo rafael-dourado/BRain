@@ -1,17 +1,18 @@
-package brain.util.math;
+package brain.util.math.geometry;
 
 import brain.util.Util;
 
-public class Line2D {
-	 
+public class Line2D implements Shifting {
+
 	private Point2D start;
 	private Point2D end;
 	private boolean isLinearFunction;
 	private boolean ignoreLimit = false;
+
 	public Line2D(Point2D start, Point2D end) {
 		this.start = start;
 		this.end = end;
-		this.isLinearFunction = !Util.compareDoble(end.getX(), start.getX());
+		this.isLinearFunction = !Util.compareDouble(end.getX(), start.getX());
 
 		if (start.equals(end))
 			throw new RuntimeException("Line2D precisa ter 2 Point2D diferentes entre si.");
@@ -37,49 +38,54 @@ public class Line2D {
 	public boolean isLinearFunction() {
 		return isLinearFunction;
 	}
+
 	/**
 	 * retorna o maior valor entre start.x e end.x
+	 * 
 	 * @return o maior valor entre start.x e end.x
 	 */
-	public double getGreaterX(){
-		
-		if(end.getX() > start.getX())
+	public double getGreaterX() {
+
+		if (end.getX() > start.getX())
 			return end.getX();
 		return start.getX();
 
 	}
-	
+
 	/**
 	 * retorna o menor valor entre start.x e end.x
+	 * 
 	 * @return o menor valor entre start.x e end.x
 	 */
-	public double getLeastX(){
-		
-		if(end.getX() > start.getX())
+	public double getLeastX() {
+
+		if (end.getX() > start.getX())
 			return start.getX();
-		
+
 		return end.getX();
 	}
-	
+
 	/**
 	 * retorna o maior valor entre start.y e end.y
+	 * 
 	 * @return o maior valor entre start.y e end.y
 	 */
-	public double getGreaterY(){
-		if( end.getY() > start.getY())
+	public double getGreaterY() {
+		if (end.getY() > start.getY())
 			return end.getY();
-		
+
 		return start.getY();
 	}
-	
+
 	/**
 	 * retorna o menor valor entre start.y e end.y
+	 * 
 	 * @return o menor valor entre start.y e end.y
 	 */
-	public double getLeastY(){
-		if( end.getY() > start.getY() )
+	public double getLeastY() {
+		if (end.getY() > start.getY())
 			return start.getY();
-		
+
 		return end.getY();
 	}
 
@@ -107,7 +113,7 @@ public class Line2D {
 	 *         <code>false</code> caso contrário.
 	 */
 	public boolean isParallelTo(Line2D line) {
-		return Util.compareDoble(this.getAngularCoefficient(), line.getAngularCoefficient());
+		return Util.compareDouble(this.getAngularCoefficient(), line.getAngularCoefficient());
 	}
 
 	/**
@@ -125,8 +131,8 @@ public class Line2D {
 	}
 
 	/**
-	 * Retorna o ponto de interseção a uma determinada linha  ou
-	 * {@code Null} caso não haja interseção entre elas
+	 * Retorna o ponto de interseção a uma determinada linha ou {@code Null}
+	 * caso não haja interseção entre elas
 	 * 
 	 * @param line
 	 *            uma linha qualquer
@@ -159,38 +165,51 @@ public class Line2D {
 		}
 
 		Point2D intersectPoint = new Point2D(x, y);
-		
-		if( ignoreLimit || ( this.contains( intersectPoint ) && line.contains( intersectPoint ) ) )
+
+		if (ignoreLimit || (this.contains(intersectPoint) && line.contains(intersectPoint)))
 			return intersectPoint;
 
-		// as linhas se interceptam, mas não em seu intervalo delimitado por end e start;
+		// as linhas se interceptam, mas não em seu intervalo delimitado por end
+		// e start;
 		return null;
 	}
-	
-	public void ignoreLimit(boolean ignoreLimit){
+
+	public void ignoreLimit(boolean ignoreLimit) {
 		this.ignoreLimit = ignoreLimit;
 	}
-	
+
 	/**
 	 * Verifica se um ponto pertence a uma linha.
-	 * @param point um ponto qualquer.
-	 * @return {@code true} se o ponto pertencer à linha ou {@code false} caso contrário.
+	 * 
+	 * @param point
+	 *            um ponto qualquer.
+	 * @return {@code true} se o ponto pertencer à linha ou {@code false} caso
+	 *         contrário.
 	 */
-	public boolean contains(Point2D point){
-		if(Util.compareDoble(end.getX(), start.getX()))
+	public boolean contains(Point2D point) {
+		if (Util.compareDouble(end.getX(), start.getX()))
 			return false;
-		
-		if(!ignoreLimit)
-			if(point.getX() > getGreaterX() || 
-				point.getX() < getLeastX() || 
-				point.getY() > getGreaterY() || 
-				point.getY() < getLeastY())
-			return false;
-		
-		double a = (end.getY() - start.getY())/(end.getX()-start.getX());
-		double b = (start.getY()*end.getX() - start.getX()*end.getY()) / (end.getX() - start.getX() );
-		
-		return Util.compareDoble(point.getY(), a*point.getX() + b);
+
+		if (!ignoreLimit)
+			if (point.getX() > getGreaterX() || point.getX() < getLeastX() || point.getY() > getGreaterY()
+					|| point.getY() < getLeastY())
+				return false;
+
+		double a = (end.getY() - start.getY()) / (end.getX() - start.getX());
+		double b = (start.getY() * end.getX() - start.getX() * end.getY()) / (end.getX() - start.getX());
+
+		return Util.compareDouble(point.getY(), a * point.getX() + b);
 	}
-	
+
+	@Override
+	public void desloc(double x, double y) {
+		this.getStart().desloc(x, y);
+		this.getEnd().desloc(x, y);
+	}
+
+	@Override
+	public void revertDesloc() {
+		this.getStart().revertDesloc();
+		this.getEnd().revertDesloc();
+	}
 }
