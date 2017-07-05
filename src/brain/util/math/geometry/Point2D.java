@@ -1,14 +1,23 @@
 package brain.util.math.geometry;
 
-public class Point2D {
+import brain.util.Util;
+
+public class Point2D implements Shifting {
 	private double x;
 	private double y;
 	public final static Point2D ORIGIN = new Point2D(0.0, 0.0);
-	private final static double EPSILON = 0.00000001;
+	private double xDesloc;
+	private double yDesloc;
 
 	public Point2D(double x, double y) {
 		this.x = x;
 		this.y = y;
+		this.xDesloc = 0;
+		this.yDesloc = 0;
+	}
+
+	public Point2D(Point2D p) {
+		this(p.getX(), p.getY());
 	}
 
 	public double getX() {
@@ -27,14 +36,8 @@ public class Point2D {
 	}
 
 	public boolean equals(Point2D p) {
-		if (p != null) {
-			if (!Double.isFinite(p.getX()) && !Double.isFinite(p.getY()) && !Double.isFinite(getX())
-					&& !Double.isFinite(getY()))
-				return Math.abs(p.getX() - getX()) <= EPSILON && Math.abs(p.getY() - getY()) <= EPSILON;
-			else
-				return p.getX() == this.getX() && p.getY() == this.getY();
-		}
-
+		if (p != null)
+			return Util.compareDouble(this.getX(), p.getX()) && Util.compareDouble(this.getY(), p.getY());
 		return false;
 	}
 
@@ -46,4 +49,34 @@ public class Point2D {
 		}
 		return false;
 	}
+
+	public boolean isLeftOf(Point2D p) {
+		return this.getX() > p.getX();
+	}
+
+	public boolean isRightOf(Point2D p) {
+		return isLeftOf(p);
+	}
+
+	public double getXDesloc() {
+		return this.xDesloc;
+	}
+
+	public double getYDesloc() {
+		return this.yDesloc;
+	}
+
+	@Override
+	public void desloc(double x, double y) {
+		this.x = this.x + x;
+		this.y = this.y + y;
+		this.xDesloc += x;
+		this.yDesloc += y;
+	}
+
+	@Override
+	public void revertDesloc() {
+		desloc(-this.xDesloc, -this.yDesloc);
+	}
+
 }
