@@ -1,11 +1,11 @@
-package brain.util.math;
+package brain.util.math.geometry;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import brain.util.Util;
-import brain.util.math.Point2D;
-public class Polygon2D {
+
+public class Polygon2D implements Shifting {
 
 	private List<Point2D> vertexes;
 
@@ -19,12 +19,33 @@ public class Polygon2D {
 
 	public Polygon2D(Point2D... point2ds) {
 		vertexes = new ArrayList<>();
-		for(Point2D p: point2ds)
+		for (Point2D p : point2ds)
 			vertexes.add(p);
 	}
 
 	public boolean isValid() {
 		return false;
+	}
+
+	public List<Line2D> getEdges() {
+		Point2D a;
+		Point2D b;
+		List<Line2D> edges = new ArrayList<Line2D>();
+		for (int i = 0; i < vertexes.size(); i++) {
+			a = new Point2D(vertexes.get(i));
+
+			if (i != vertexes.size() - 1) {
+				b = new Point2D(vertexes.get(i + 1));
+
+			} else {
+				b = new Point2D(vertexes.get(0));
+			}
+
+			Line2D edge = new Line2D(a, b);
+			edges.add(edge);
+		}
+
+		return edges;
 	}
 
 	public boolean intersects(Polygon2D other) {
@@ -74,7 +95,7 @@ public class Polygon2D {
 
 		return leastY;
 	}
-	
+
 	/**
 	 * checa se um ponto existe no polígono. Obs: O ponto não será considerado
 	 * interno se ele estiver contido na aresta do polígono.
@@ -85,12 +106,14 @@ public class Polygon2D {
 	 *         {@code false} caso contrário
 	 */
 	public boolean hasInside(Point2D point) {
-		if (Util.compare(point.getX(), getGreaterX()) >= 0 || Util.compare(point.getX(), getLeastX()) <= 0)
+
+		// se o ponto não estiver entre os mínimos e máximos do polígono, ele
+		// não estará dentro do polígono.
+		if ((Util.compare(point.getX(), getGreaterX()) >= 0) || (Util.compare(point.getX(), getLeastX()) <= 0))
+			return false;
+		if ((Util.compare(point.getY(), getGreaterY())) >= 0 || (Util.compare(point.getY(), getLeastY()) <= 0))
 			return false;
 
-		if (Util.compare(point.getY(), getGreaterY()) >= 0 || Util.compare(point.getY(), getLeastY()) <= 0)
-			return false;
-		
 		List<Point2D> checked = new ArrayList<Point2D>();
 		int count = 0;
 		Line2D auxLine = new Line2D(new Point2D(0.0, point.getY()), point);
@@ -99,53 +122,71 @@ public class Polygon2D {
 		for (int i = 0; i < vertexes.size(); i++) {
 			Point2D a = new Point2D(vertexes.get(i));
 			Point2D b;
-			
+
 			if (i != vertexes.size() - 1) {
 				b = new Point2D(vertexes.get(i + 1));
-				
+
 			} else {
 				b = new Point2D(vertexes.get(0));
 			}
-
+			// aresta do polígono formado pelos vértices a e b;
 			Line2D edge = new Line2D(a, b);
 
+			// ponto de interseção entre a reta auxiliar e a aresta;
 			Point2D intersection = auxLine.getIntersctPointIn(edge);
-			
+
 			// se houve interseção, só contar se foi à direita do ponto.
-			if(intersection != null){
+			if (intersection != null) {
 				if (intersection.isRightOf(point)) {
 					// interseção não foi em um vértice
 					if (!a.equals(intersection) && !b.equals(intersection))
 						count++;
-					
 					else {
-						Point2D inVertex = getIntersected(intersection, a, b);
-						if(!isLocalMinOrMax(intersection) && !checked.contains(inVertex)){
+						// se a interseção foi em um vértice, só irá
+						// contabilizar caso o vértice ainda não tenha sido
+						// contabilizado e ele não seja um ponto crítico.
+						if (!isLocalMinOrMax(intersection) && !checked.contains(intersection)) {
 							count++;
-							checked.add(inVertex);
-							
+							checked.add(intersection);
 						}
-
 					}
-					
-				} 
-				
+				}
 			}
-
 		}
 		return count % 2 != 0;
 	}
-	
-	public Point2D getIntersected(Point2D intersection, Point2D a, Point2D b){
-		Point2D p = intersection.equals(a) ? a : b ;
-		return p;
+
+	@Override
+	public void desloc(double x, double y) {
+		for (Point2D vertex : vertexes) {
+			vertex.desloc(x, y);
+		}
 	}
-	
+
+	@Override
+	public void revertDesloc() {
+		for (Point2D vertex : vertexes) {
+			vertex.revertDesloc();
+		}
+	}
+
+	public boolean crosses(Line2D line) {
+		List<Line2D> edges = getEdges();
+
+		for (Line2D edge : edges) {
+			Point2D intersection = edge.getIntersctPointIn(line);
+			if (intersection != null && (!intersection.equals(edge.getStart()) && !intersection.equals(edge.getEnd())))
+				return true;
+		}
+
+		return false;
+	}
+
 	/**
 	 * verifca se o vértice é um máximo ou mínimo local.
-	 * O vértice será um mínimo ou máximo local se os coeficientes angulares da aresta anterior e da
-	 * aresta seguinte tiverem sinais diferentes.
-	 * @return {@code true} se o vértice for um mínimo local ou {@code false} caso contrário.
+	 * 
+	 * @return {@code true} se o vértice for um mínimo local ou {@code false}
+	 *         caso contrário.
 	 */
 
 	private boolean isLocalMinOrMax(Point2D vertex) {
@@ -164,25 +205,18 @@ public class Polygon2D {
 		else
 			prev = new Point2D(vertexes.get(vertexes.size() - 1));
 
-		Point2D aux = new Point2D(0,vertex.getY());
+		Point2D observer = new Point2D(0, vertex.getY());
 
-		final Line2D auxLine1 = new Line2D(aux,prev);
-		final Line2D auxLine2 = new Line2D(aux,next);
-		
+		// cria 2 linhas a partir do ponto de observação até os pontos prev e
+		// next.
+		final Line2D auxLine1 = new Line2D(observer, prev);
+		final Line2D auxLine2 = new Line2D(observer, next);
+
+		// o vértice será um ponto mínimo ou máximo (também conhecido como
+		// crítico)
+		// se os coeficientes angulares das retas formadas por auxLine1 e
+		// auxLine2 forem iguais.
 		return auxLine1.getAngularCoefficient() * auxLine2.getAngularCoefficient() > 0;
 	}
 
-	public void desloc(double x, double y) {
-		for (Point2D vertex : vertexes) {
-			vertex.desloc(x, y);
-		}
-	}
-
-	public void revertDesloc() {
-		for (Point2D vertex : vertexes) {
-			vertex.revertDesloc();
-		}
-	}
 }
-
-
