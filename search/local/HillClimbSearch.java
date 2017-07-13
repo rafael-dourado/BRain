@@ -24,7 +24,7 @@ import brain.util.node.NodeExpander;
  *  	corrente ← CRIAR-NÓ(ESTADO-INICIAL[problema])
  *  	repita
  *  		 vizinho ← um sucessor de corrente com valor mais alto 
- *  		 se VALOR[vizinho] VALOR[corrente] então retornar ESTADO[corrente]
+ *  		 se VALOR[vizinho] < VALOR[corrente] então retornar ESTADO[corrente]
  *  		 corrente ← vizinho
  * </pre>
  * 
