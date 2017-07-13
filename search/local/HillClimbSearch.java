@@ -64,11 +64,6 @@ public class HillClimbSearch<S> implements SearchForActions<S>, SearchForState<S
 		this.nExpander = nExpander;
 		this.nExpander.addNodeListener((node) -> metrics.incrementInt(NODES_EXPANDED));
 	}
-
-	/**
-	 * 
-	 * 
-	 */
 	/**
 	 * função SUBIDA-DE-ENCOSTA(problema) retorna um estado que é um máximo
 	 * local. Se o máximo local também for um máximo global, ou seja, for
