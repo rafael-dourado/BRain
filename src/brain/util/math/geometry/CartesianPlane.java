@@ -42,6 +42,22 @@ public class CartesianPlane {
 		return polygons.add(polygon);
 	}
 
+	public void addFirst(Point2D p) {
+		points.add(0, p);
+	}
+
+	public void set(int index, Point2D point) {
+		points.set(index, point);
+	}
+
+	public void set(int index, Polygon2D polygon) {
+		polygons.set(index, polygon);
+	}
+
+	public void set(int index, Line2D line) {
+		lines.set(index, line);
+	}
+
 	public boolean remove(Point2D point) {
 		return points.remove(point);
 	}
