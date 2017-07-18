@@ -18,7 +18,7 @@ import brain.util.node.Node;
  * @author cpd
  *
  * @param <S>
- *            o tipo de representação do estado que será submetido ao algoritmo.
+ *            O tipo de representação do estado que será submetido ao algoritmo.
  */
 public class RandomRestartHillClimbSearch<S> extends HillClimbSearch<S> {
 
@@ -32,7 +32,7 @@ public class RandomRestartHillClimbSearch<S> extends HillClimbSearch<S> {
 	 * @param h
 	 *            função de avaliação.
 	 * @param numberOfStates
-	 *            numero de estados iniciais.
+	 *            número de estados iniciais.
 	 */
 	public RandomRestartHillClimbSearch(ToDoubleFunction<Node<S>> h, int numberOfStates) {
 		super(h);
@@ -47,7 +47,7 @@ public class RandomRestartHillClimbSearch<S> extends HillClimbSearch<S> {
 	 * @param numberOfStates
 	 *            numero de estados iniciais.
 	 * @param maxIterations
-	 *            numero de reinícios máximo que o algoritmo pode ralizar.
+	 *            número máximo de reinícios que o algoritmo pode ralizar.
 	 */
 	public RandomRestartHillClimbSearch(ToDoubleFunction<Node<S>> h, int numberOfStates, int maxIterations) {
 		this(h, numberOfStates);
@@ -85,6 +85,7 @@ public class RandomRestartHillClimbSearch<S> extends HillClimbSearch<S> {
 		// encontrar um estado objetivo durante a subida de encosta de qualquer
 		// problema gerado.
 		while ((step < maxIterations) && (delta > MIN_VALUE)) {
+
 			// procura o maior valor de cada problema por meio da busca em
 			// subida de encosta, e armazena o maior entre eles
 			for (Problem<S> problem : problems) {
@@ -102,7 +103,6 @@ public class RandomRestartHillClimbSearch<S> extends HillClimbSearch<S> {
 			// reinicia os problemas com mais problemas aleatórios
 			problems = SearchUtils.problemsWithRandomIntialStates(p, nExpander, numberOfStates);
 			step++;
-
 		}
 
 		return bestNode;
