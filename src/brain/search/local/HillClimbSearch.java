@@ -1,111 +1,201 @@
 package brain.search.local;
 
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.ToDoubleFunction;
 
+import brain.agent.Action;
 import brain.problem.Problem;
+import brain.search.SearchForActions;
+import brain.search.SearchForState;
 import brain.search.SearchUtils;
+import brain.search.informed.Informed;
+import brain.util.metrics.Metrics;
 import brain.util.node.Node;
+import brain.util.node.NodeExpander;
 
 /**
- * Inteligência Artificial: Uma Abordagem Moderna (3a Edição), página 164.
  * 
- * A subida de encosta com reinício aleatório adota o conhecido ditado: “Se não
- * tiver sucesso na primeira vez, continue tentando.” Ela conduz uma série de
- * buscas de subida de encosta a partir de estados iniciais gerados de forma
- * aleatória, até encontrar um objetivo.
+ * Inteligência Artificial: Uma Abordagem Moderna (3a Edição): Figura 4.2,
+ * página 161.<br>
  * 
- * @author cpd
- *
+ * <pre>
+ * função SUBIDA-DE-ENCOSTA(problema) retorna um estado que é um máximo local
+ *  	corrente ← CRIAR-NÓ(ESTADO-INICIAL[problema])
+ *  	repita
+ *  		 vizinho ← um sucessor de corrente com valor mais alto 
+ *  		 se VALOR[vizinho] VALOR[corrente] então retornar ESTADO[corrente]
+ *  		 corrente ← vizinho
+ * </pre>
+ * 
+ * O algoritmo de busca é simplesmente um laço repetitivo que se move de forma
+ * contínua no sentido do valor crescente, isto é, encosta acima. O algoritmo
+ * termina quando alcança um “pico” em que nenhum vizinho tem valor mais alto. O
+ * algoritmo não mantém uma árvore de busca e, assim, a estrutura de dados do nó
+ * atual só precisa registrar o estado e o valor de sua função objetivo. A busca
+ * de subida de encosta não examina antecipadamente valores de estados além dos
+ * vizinhos imediatos do estado corrente.
+ * 
+ * @author Rafael D.
+ * 
+ * 
  * @param <S>
- *            o tipo de representação do estado que será submetido ao algoritmo.
+ *            O tipo de estado que será submetido ao algoritmo de busca.
  */
-public class RandomRestartHillClimbSearch<S> extends HillClimbSearch<S> {
+public class HillClimbSearch<S> implements SearchForActions<S>, SearchForState<S>, Informed<S> {
 
-	private int maxIterations = 1000;
-	private final double MIN_VALUE = 0.001;
-	private int numberOfStates;
+	protected NodeExpander<S> nExpander;
+	protected Metrics metrics = new Metrics();
+	protected ToDoubleFunction<Node<S>> h;
+	protected final String NODES_EXPANDED = "nodesExpaded";
+	protected final String NODE_VALUE = "nodeValue";
+	protected boolean globalMaxFound = false;
 
 	/**
-	 * Construtor.
+	 * Contrutor
 	 * 
-	 * @param h
-	 *            função de avaliação.
-	 * @param numberOfStates
-	 *            numero de estados iniciais.
 	 */
-	public RandomRestartHillClimbSearch(ToDoubleFunction<Node<S>> h, int numberOfStates) {
-		super(h);
-		this.numberOfStates = numberOfStates;
+	public HillClimbSearch(ToDoubleFunction<Node<S>> h) {
+		this(new NodeExpander<S>(), h);
+	}
+
+	public HillClimbSearch(NodeExpander<S> nExpander, ToDoubleFunction<Node<S>> h) {
+		this.h = h;
+		this.nExpander = nExpander;
+		this.nExpander.addNodeListener((node) -> metrics.incrementInt(NODES_EXPANDED));
 	}
 
 	/**
-	 * Construtor.
+	 * função SUBIDA-DE-ENCOSTA(problema) retorna um estado que é um máximo
+	 * local. Se o máximo local também for um máximo global, ou seja, for
+	 * encontrado um estado objetivo, a função {@link #globalMaxFound()}, quando
+	 * chamada, irá retornar true.
 	 * 
-	 * @param h
-	 *            função de avaliação.
-	 * @param numberOfStates
-	 *            numero de estados iniciais.
-	 * @param maxIterations
-	 *            numero de reinícios máximo que o algoritmo pode ralizar.
+	 * @param p
+	 *            uma formação do problema
+	 * @return um nó que é um máximo local.
 	 */
-	public RandomRestartHillClimbSearch(ToDoubleFunction<Node<S>> h, int numberOfStates, int maxIterations) {
-		this(h, numberOfStates);
-		this.maxIterations = maxIterations;
-	}
-
-	/**
-	 * A Subida de Encosta com Reinicio Aleatório gera problemas temporários com
-	 * estados iniciais aleatórios. Em cada problema, o algoritmo irá fazer uma
-	 * busca subida de encosta e selecionará o melhor valor (nesse caso, quanto
-	 * menor a heurística, maior o valor) entre eles. O algoritmo irá parar e
-	 * retornar o melhor nó quando: (a) o numero de iterações ultrapassar o
-	 * máximo estipulado; (b) o algoritmo encontrar um nó com valor heurístico
-	 * satisfatório previamente estipulado ou (c) quando encontrar um estado
-	 * objetivo durante a subida de encosta de qualquer problema gerado.
-	 */
-	@Override
 	public Node<S> findNode(Problem<S> p) {
 		clearMetrics();
+		// corrente ← CRIAR-NÓ(ESTADO-INICIAL[problema])
+		Node<S> current = nExpander.createRootNode(p.getInicialState());
+		if (SearchUtils.isGoalState(p, current)) {
+			globalMaxFound = p.isGoalState(current.getState());
+			return current;
+		}
 
-		// gera problemas temporários com estados iniciais aleatórios, gerados a
-		// partir do estado inicial do problema passado por paramentro.
-		List<Problem<S>> problems = SearchUtils.problemsWithRandomIntialStates(p, nExpander, numberOfStates);
+		// vizinho
+		Node<S> bestNeighbor;
 
-		// melhor nó, inicialmente com o estado inicial do problema.
-		Node<S> bestNode = nExpander.createRootNode(p.getInicialState());
+		boolean done = false;
+		// repita
+		while (!done) {
 
-		// contador de passo.
-		int step = 0;
-		double delta = Double.POSITIVE_INFINITY;
+			List<Node<S>> children = nExpander.expand(current, p);
+			metrics.incrementInt(NODES_EXPANDED);
+			// vizinho ← um sucessor de corrente com valor mais alto
+			bestNeighbor = getHighestValueOf(children);
 
-		// o algoritmo irá parar quando: (a) o numero de iterações ultrapassar o
-		// máximo estipulado; (b) o algoritmo encontrar um nó com valor
-		// heurístico satisfatório previamente estipulado ou (c) quando
-		// encontrar um estado objetivo durante a subida de encosta de qualquer
-		// problema gerado.
-		while ((step < maxIterations) && (delta > MIN_VALUE)) {
-			// procura o maior valor de cada problema por meio da busca em
-			// subida de encosta, e armazena o maior entre eles
-			for (Problem<S> problem : problems) {
-				Node<S> bestLocal = super.findNode(problem);
-
-				// atualiza o melhor nó de acordo com a função de avaliação
-				// (melhor heuristica)
-				delta = valueOf(bestNode) - valueOf(bestLocal);
-				if (delta < 0) {
-
-					bestNode = bestLocal;
-					metrics.set(NODE_VALUE, valueOf(bestNode));
-				}
+			// se VALOR[vizinho] < VALOR[corrente] então retornar
+			// ESTADO[corrente]
+			if (valueOf(bestNeighbor) < valueOf(current)) {
+				globalMaxFound = p.isGoalState(current.getState());
+				metrics.set(NODE_VALUE, valueOf(current));
+				return current;
 			}
 
-			// reinicia os problemas com mais problemas aleatórios
-			problems = SearchUtils.problemsWithRandomIntialStates(p, nExpander, numberOfStates);
-			step++;
+			// corrente ← vizinho
+			current = bestNeighbor;
 
 		}
 
+		return null;
+	}
+
+	/**
+	 * Retorna {@code true} se a subida de encosta encontrar um máximo global
+	 * 
+	 * @return {@code true}se a subida de encosta encontrar um máximo global
+	 */
+	public boolean globalMaxFound() {
+		return this.globalMaxFound;
+	}
+
+	@Override
+	public S findState(Problem<S> p) {
+		this.nExpander.useParentLinks(false);
+		// TODO Auto-generated method stub
+		return this.findNode(p).getState();
+	}
+
+	@Override
+	public List<Action> findActions(Problem<S> p) {
+		this.nExpander.useParentLinks(true);
+		Node<S> node = this.findNode(p);
+		return SearchUtils.getSequenceOfActions(node);
+	}
+
+	@Override
+	public Metrics getMetrics() {
+
+		return metrics;
+	}
+
+	@Override
+	public void addNodeListener(Consumer<Node<S>> listener) {
+		this.nExpander.addNodeListener(listener);
+
+	}
+
+	@Override
+	public boolean removeNodeListener(Consumer<Node<S>> listener) {
+
+		return this.nExpander.removeNodeListener(listener);
+	}
+
+	@Override
+	public void setHeuristicFunction(ToDoubleFunction<Node<S>> h) {
+		this.h = h;
+
+	}
+
+	/**
+	 * Calcula o valor e retorna o maior nó de uma lista.
+	 * 
+	 * @param children
+	 *            uma lista de nós.
+	 * @return o maior nó de uma lista.
+	 * @see {@link #valueOf(Node)}
+	 */
+	protected Node<S> getHighestValueOf(List<Node<S>> children) {
+		double highest = Double.NEGATIVE_INFINITY;
+		Node<S> bestNode = null;
+		for (Node<S> child : children) {
+			if (valueOf(child) > highest) {
+				bestNode = child;
+				highest = valueOf(child);
+			}
+		}
 		return bestNode;
+	}
+
+	/**
+	 * Calcula o valor do nó. Em uma subida de encosta, o valor do nó é
+	 * calculado a partir de sua heurística. Quanto menor a heurística
+	 * (considerando que ela é sempre maior ou igual a 0), melhor será o valor
+	 * do nó.
+	 * 
+	 * @param child
+	 *            o nó que será calculado.
+	 * @return o valor do nó.
+	 */
+	protected double valueOf(Node<S> node) {
+		// subida de encosta considera a melhor heurística.
+		return -1 * h.applyAsDouble(node);
+	}
+
+	protected void clearMetrics() {
+		metrics.set(NODES_EXPANDED, 0);
+		metrics.set(NODE_VALUE, 0);
 	}
 }
