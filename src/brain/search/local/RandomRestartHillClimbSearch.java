@@ -1,6 +1,5 @@
 package brain.search.local;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ToDoubleFunction;
 
@@ -23,26 +22,36 @@ import brain.util.node.Node;
  */
 public class RandomRestartHillClimbSearch<S> extends HillClimbSearch<S> {
 
-	private final int MAX_ITERATIONS = 100;
-	private final int MAX_STATES = 5;
+	private int maxIterations = 1000;
 	private final double MIN_VALUE = 0.001;
 	private int numberOfStates;
 
 	/**
-	 * Construtor
+	 * Construtor.
 	 * 
 	 * @param h
-	 *            função Heurística
+	 *            função de avaliação.
 	 * @param numberOfStates
-	 *            número de estados que serão gerados aleatoriamente.
+	 *            numero de estados iniciais.
 	 */
 	public RandomRestartHillClimbSearch(ToDoubleFunction<Node<S>> h, int numberOfStates) {
 		super(h);
+		this.numberOfStates = numberOfStates;
+	}
 
-		if (numberOfStates > MAX_STATES)
-			this.numberOfStates = MAX_STATES;
-		else
-			this.numberOfStates = numberOfStates;
+	/**
+	 * Construtor.
+	 * 
+	 * @param h
+	 *            função de avaliação.
+	 * @param numberOfStates
+	 *            numero de estados iniciais.
+	 * @param maxIterations
+	 *            numero de reinícios máximo que o algoritmo pode ralizar.
+	 */
+	public RandomRestartHillClimbSearch(ToDoubleFunction<Node<S>> h, int numberOfStates, int maxIterations) {
+		this(h, numberOfStates);
+		this.maxIterations = maxIterations;
 	}
 
 	/**
@@ -61,7 +70,7 @@ public class RandomRestartHillClimbSearch<S> extends HillClimbSearch<S> {
 
 		// gera problemas temporários com estados iniciais aleatórios, gerados a
 		// partir do estado inicial do problema passado por paramentro.
-		List<Problem<S>> problems = problemsWithRandomIntialStates(p);
+		List<Problem<S>> problems = SearchUtils.problemsWithRandomIntialStates(p, nExpander, numberOfStates);
 
 		// melhor nó, inicialmente com o estado inicial do problema.
 		Node<S> bestNode = nExpander.createRootNode(p.getInicialState());
@@ -75,9 +84,9 @@ public class RandomRestartHillClimbSearch<S> extends HillClimbSearch<S> {
 		// heurístico satisfatório previamente estipulado ou (c) quando
 		// encontrar um estado objetivo durante a subida de encosta de qualquer
 		// problema gerado.
-		while ((step < MAX_ITERATIONS) && (delta > MIN_VALUE)) {
-			// procura o maior valor de cada problema, e checa qual o maior
-			// entre eles
+		while ((step < maxIterations) && (delta > MIN_VALUE)) {
+			// procura o maior valor de cada problema por meio da busca em
+			// subida de encosta, e armazena o maior entre eles
 			for (Problem<S> problem : problems) {
 				Node<S> bestLocal = super.findNode(problem);
 
@@ -85,41 +94,17 @@ public class RandomRestartHillClimbSearch<S> extends HillClimbSearch<S> {
 				// (melhor heuristica)
 				delta = valueOf(bestNode) - valueOf(bestLocal);
 				if (delta < 0) {
-
 					bestNode = bestLocal;
 					metrics.set(NODE_VALUE, valueOf(bestNode));
 				}
-
 			}
 
 			// reinicia os problemas com mais problemas aleatórios
-			problems = problemsWithRandomIntialStates(p);
+			problems = SearchUtils.problemsWithRandomIntialStates(p, nExpander, numberOfStates);
 			step++;
 
 		}
 
 		return bestNode;
-	}
-
-	/**
-	 * Gera problemas aleatórios a partir de um problema inicial. O tamanho da
-	 * lista dependerá do número de estados definidos no construtor
-	 * 
-	 * @param problem
-	 *            uma formação de um problema
-	 * @return uma lista com problemas inciais aleatórios.
-	 */
-	private List<Problem<S>> problemsWithRandomIntialStates(Problem<S> problem) {
-		List<Problem<S>> problems = new ArrayList<Problem<S>>(numberOfStates);
-
-		for (int i = 0; i < numberOfStates; i++) {
-			Problem<S> randomInitialStateProblem = new Problem<S>(SearchUtils.generateRandomState(problem, nExpander),
-					problem.getActionsFunction(), problem.getResultFunction(), problem.getGoalTest(),
-					problem.getStepCostFunction());
-			problems.add(randomInitialStateProblem);
-		}
-
-		return problems;
-
 	}
 }
