@@ -13,26 +13,26 @@ import brain.search.SearchUtils;
 import brain.util.node.Node;
 
 /**
- * InteligÍncia Artificial: Uma Abordagem Moderna, 3a EdiÁ„o. p·gina 166. <br>
+ * Intelig√™ncia Artificial: Uma Abordagem Moderna, 3a Edi√ß√£o. p√°gina 166. <br>
  * <br>
  * 
- * A manutenÁ„o de apenas um nÛ na memÛria pode parecer uma reaÁ„o extrema ao
- * problema de limitaÁ„o de memÛria. O algoritmo de busca em feixe local mantÈm
- * o controle de k estados, em vez de somente um. Ela comeÁa com k estados
- * gerados aleatoriamente. Em cada passo, s„o gerados todos os sucessores de
- * todos os k estados. Se qualquer um deles for um objetivo, o algoritmo ir·
- * parar. Caso contr·rio, ele selecionar· os k melhores sucessores a partir da
- * lista completa e repetir· o procedimento.
+ * A manuten√ß√£o de apenas um n√≥ na mem√≥ria pode parecer uma rea√ß√£o extrema ao
+ * problema de limita√ß√£o de mem√≥ria. O algoritmo de busca em feixe local mant√©m
+ * o controle de k estados, em vez de somente um. Ela come√ßa com k estados
+ * gerados aleatoriamente. Em cada passo, s√£o gerados todos os sucessores de
+ * todos os k estados. Se qualquer um deles for um objetivo, o algoritmo ir√°
+ * parar. Caso contr√°rio, ele selecionar√° os k melhores sucessores a partir da
+ * lista completa e repetir√° o procedimento.
  * 
  * @author Rafael D.
  *
  * @param <T>
- *            o tipo de estado que ser· submetido ao algoritmo de busca.
+ *            o tipo de estado que ser√° submetido ao algoritmo de busca.
  */
 public class BeamSearch<S> extends HillClimbSearch<S> {
 
 	private int numberOfStates;
-	private final int MAX_ITERATIONS = 1000;
+	private final int MAX_ITERATIONS = 10000;
 
 	public BeamSearch(ToDoubleFunction<Node<S>> h, int numberOfStates) {
 		super(h);
@@ -44,7 +44,7 @@ public class BeamSearch<S> extends HillClimbSearch<S> {
 
 		int iterations = 0;
 
-		// comeÁa com k estados gerados aleatoriamente
+		// come√ßa com k estados gerados aleatoriamente
 		List<Problem<S>> problems = SearchUtils.problemsWithRandomIntialStates(p, nExpander, numberOfStates);
 
 		Queue<Node<S>> childs = QueueFactory.createPriorityQueue(Comparator.comparing(h::applyAsDouble));
@@ -52,41 +52,45 @@ public class BeamSearch<S> extends HillClimbSearch<S> {
 		List<Node<S>> bestNodes = new ArrayList<Node<S>>(numberOfStates);
 
 		while (iterations < MAX_ITERATIONS) {
-			// Em cada passo, s„o gerados todos os sucessores de todos os k
+			// Em cada passo, s√£o gerados todos os sucessores de todos os k
 			// estados
 			for (Problem<S> problem : problems) {
 
 				Node<S> node = nExpander.createRootNode(problem.getInicialState());
 				if (SearchUtils.isGoalState(problem, node)) {
+					metrics.set(NODE_VALUE, valueOf(node));
 					globalMaxFound = true;
 					return node;
 				}
 
-				// s„o gerados todos os sucessores de todos os k estados
+				// s√£o gerados todos os sucessores de todos os k estados
 				List<Node<S>> nodesExpanded = nExpander.expand(node, problem);
-
+				metrics.incrementInt(NODES_EXPANDED);
 				for (Node<S> nodeExpanded : nodesExpanded) {
 
-					// Se qualquer um deles for um objetivo, o algoritmo ir·
+					// Se qualquer um deles for um objetivo, o algoritmo ir√°
 					// parar
 					if (SearchUtils.isGoalState(problem, nodeExpanded)) {
+						metrics.set(NODE_VALUE, valueOf(nodeExpanded));
 						globalMaxFound = true;
 						return nodeExpanded;
 					}
 					// cria uma lista completa com todos os sucessores gerados
-					childs.add(nodeExpanded);
+					if(!childs.contains(nodeExpanded))
+						childs.add(nodeExpanded);
 
 				}
 			}
 
 			// Seleciona os k melhores sucessores a partir da lista completa
 			bestNodes = getBestFrom(childs);
-
-			// repetir· o procedimento
-			problems = SearchUtils.createProblems(bestNodes, p, nExpander);
 			bestNode = getHighestValueOf(bestNodes);
+			
+			// repetir√° o procedimento
+			problems = SearchUtils.createProblems(bestNodes, p, nExpander);
+			iterations++;
 		}
-
+		metrics.set(NODE_VALUE, valueOf(bestNode));
 		return bestNode;
 	}
 
@@ -95,7 +99,8 @@ public class BeamSearch<S> extends HillClimbSearch<S> {
 		Iterator<Node<S>> nodesIterator = childs.iterator();
 
 		for (int i = 0; i < numberOfStates; i++) {
-			bestNodes.add(nodesIterator.next());
+			if(nodesIterator.hasNext())
+				bestNodes.add(nodesIterator.next());
 		}
 		return bestNodes;
 	}
