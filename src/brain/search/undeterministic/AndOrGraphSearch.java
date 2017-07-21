@@ -35,10 +35,36 @@ import brain.problem.UndeterministicProblem;
  * 		retorna [se s<sub>1</sub> então plano<sub>1</sub> senão se s<sub>2</sub> então plano<sub>2</sub> senão . . . se s<sub>n−1</sub> então plano<sub>n−1</sub> senão plano<sub>n</sub>
  * </pre>
  * 
+ * 
+ * Obs: este algoritmo descarta automaticamente ações em estados que geram
+ * estados já gerados anteriormente (evitando laços). A busca é realizada
+ * através de uma busca em profundidade, até que seja encontrado todos os nós
+ * folha (que contém um objetivo) de uma expansão, expandindo em seguida o nó
+ * pai, novamente em profundidade.
+ * 
+ * 
  * @author cpd
  *
  */
+
 public class AndOrGraphSearch<S> {
+	/**
+	 * <pre>
+	 * função BUSCA-EM-GRAFOS-E-OU(problema) retorna um plano condicional ou
+	 * falha
+	 * 
+	 * 	BUSCA-OU(problema.Estado-Inicial, problem, [ ])
+	 * </pre>
+	 * 
+	 * @param uma
+	 *            descrição formal do problema.
+	 * @return um plano para a solução do problema ou nulo, caso não seja
+	 *         encontrado um plano para tal.
+	 */
+	public Plan<S> andOrSearch(UndeterministicProblem<S> problem) {
+		return orSearch(problem.getInicialState(), problem, new Path<S>());
+
+	}
 
 	/**
 	 * <pre>
@@ -53,10 +79,14 @@ public class AndOrGraphSearch<S> {
 	 * </pre>
 	 * 
 	 * @param state
+	 *            o estado corrente do problema
 	 * @param problem
+	 *            uma formação formal do problema
 	 * @param path
+	 *            um conjunto de estados que já foram expandidos
 	 * @return
 	 */
+
 	public Plan<S> orSearch(S state, UndeterministicProblem<S> problem, Path<S> path) {
 		ActionsFunction<S> aFunc = problem.getActionsFunction();
 		ResultsFunction<S> rFunc = problem.getResultsFunction();
