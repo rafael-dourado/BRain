@@ -1,0 +1,35 @@
+package txt;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ArquivoRemarcacao {
+	
+	private final static String PATH_PROMOCAO = "\\\\192.168.17.99\\relatorio\\etiqueta\\30\\promocao.txt";
+	private final static String PATH_REMARCACAO = "\\\\192.168.17.99\\relatorio\\etiqueta\\30\\remarcacao.txt";
+	private final static String PRINT_TEXT_START = "^FD";
+	private final static String PRINT_TEXT_END = "^FS";
+	
+	BufferedReader buffRemarcacao; 
+	BufferedReader buffPromocao;
+	private List<Remarcacao> pRemarcacao = new ArrayList<Remarcacao>();
+	private List<Remarcacao> aRemarcacao = new ArrayList<Remarcacao>();
+	
+	public void openAtualizacao() throws FileNotFoundException{
+		buffRemarcacao = new BufferedReader(new FileReader(PATH_PROMOCAO));
+	}
+	
+	public void openPromocao() throws FileNotFoundException{
+		buffPromocao = new BufferedReader(new FileReader(PATH_PROMOCAO));
+	}
+	
+	public void clearBuffer() throws IOException{
+		buffRemarcacao.close();
+		buffPromocao.close();
+	}
+	
+}
