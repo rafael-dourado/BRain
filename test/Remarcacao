@@ -1,0 +1,37 @@
+package txt;
+
+public class Remarcacao {
+	private String ean;
+	private String descricao;
+	private String preco;
+	private String validade;
+	
+	public String getEan() {
+		return ean;
+	}
+
+	public void setEan(String ean) {
+		this.ean = ean;
+	}
+
+	public String getDescricao() {
+		return descricao;
+	}
+
+	public void setDescricao(String descricao) {
+		this.descricao = descricao;
+	}
+
+	public String getPreco() {
+		return preco;
+	}
+
+	public void setPreco(String preco) {
+		this.preco = preco;
+	}
+	
+	@Override
+	public String toString(){
+		return "EAN: " + ean + " DESCRICAO: "+ descricao +  " PRECO: " + preco;
+	}
+}
